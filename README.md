@@ -16,7 +16,6 @@
 <p align="center">
   <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/v/fastapi-passkeys.svg" alt="PyPI"></a>
   <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/pyversions/fastapi-passkeys.svg" alt="Python versions"></a>
-  <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/dm/fastapi-passkeys.svg?color=blue" alt="PyPI downloads"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://github.com/javlondevv/fastapi-passkeys/actions/workflows/ci.yml"><img src="https://github.com/javlondevv/fastapi-passkeys/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/code%20style-ruff-261230.svg" alt="Code style: ruff"></a>

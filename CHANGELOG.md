@@ -11,8 +11,6 @@
 Allows manually re-triggering a release and ensures the first successful PyPI publish via Trusted
   Publishing (OIDC).
 
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-
 
 ## v0.1.0 (2026-06-18)
 
@@ -25,5 +23,3 @@ WebAuthn/passkeys authentication for FastAPI: async-native, storage-agnostic, se
   Includes registration/authentication ceremonies, signature counter clone detection, single-use TTL
   challenges, strict origin/RP validation, pluggable repositories (in-memory, stateless, SQLAlchemy,
   Redis), a contract test-suite, a software authenticator for tests, docs, and a runnable example.
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
