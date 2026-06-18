@@ -14,16 +14,16 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/v/fastapi-passkeys.svg" alt="PyPI"></a>
-  <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/pyversions/fastapi-passkeys.svg" alt="Python versions"></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/v/fastapi-passkeys?color=blue&label=pypi" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/fastapi-passkeys/"><img src="https://img.shields.io/pypi/pyversions/fastapi-passkeys" alt="Python versions"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
   <a href="https://github.com/javlondevv/fastapi-passkeys/actions/workflows/ci.yml"><img src="https://github.com/javlondevv/fastapi-passkeys/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/code%20style-ruff-261230.svg" alt="Code style: ruff"></a>
-  <a href="https://github.com/python/mypy"><img src="https://img.shields.io/badge/typed-mypy%20strict-2a6db2.svg" alt="Typed: mypy strict"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/code%20style-ruff-261230" alt="Code style: ruff"></a>
+  <a href="https://github.com/python/mypy"><img src="https://img.shields.io/badge/typed-mypy%20strict-2a6db2" alt="Typed: mypy strict"></a>
   <br>
   <a href="https://github.com/javlondevv/fastapi-passkeys/stargazers"><img src="https://img.shields.io/github/stars/javlondevv/fastapi-passkeys?style=social" alt="GitHub stars"></a>
-  <a href="https://github.com/javlondevv/fastapi-passkeys/issues"><img src="https://img.shields.io/github/issues/javlondevv/fastapi-passkeys.svg" alt="Open issues"></a>
-  <a href="https://github.com/javlondevv/fastapi-passkeys/commits/main"><img src="https://img.shields.io/github/last-commit/javlondevv/fastapi-passkeys.svg" alt="Last commit"></a>
+  <a href="https://github.com/javlondevv/fastapi-passkeys/issues"><img src="https://img.shields.io/github/issues/javlondevv/fastapi-passkeys" alt="Open issues"></a>
+  <a href="https://github.com/javlondevv/fastapi-passkeys/commits/main"><img src="https://img.shields.io/github/last-commit/javlondevv/fastapi-passkeys/main" alt="Last commit"></a>
 </p>
 
 <p align="center">
