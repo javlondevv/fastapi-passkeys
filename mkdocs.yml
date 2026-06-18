@@ -1,0 +1,36 @@
+site_name: fastapi-passkeys
+site_description: Passkeys / WebAuthn authentication for FastAPI.
+repo_url: https://github.com/javlondevv/fastapi-passkeys
+repo_name: javlondevv/fastapi-passkeys
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+    - scheme: slate
+      primary: indigo
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts: concepts.md
+  - Storage backends: storage.md
+  - Security model: security.md
+  - Migrating from django-passkeys: migration.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
