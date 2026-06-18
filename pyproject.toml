@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastapi-passkeys"
-version = "0.1.1"
+version = "0.1.2"
 description = "Passkeys / WebAuthn authentication for FastAPI — secure by default, storage-agnostic, async-native."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -69,6 +69,7 @@ docs = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.25",
 ]
+
 
 
 
