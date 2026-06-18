@@ -1,2 +1,4 @@
 mkdocs-material>=9.5
 mkdocstrings[python]>=0.25
+# Install the package so mkdocstrings/griffe can resolve the public API.
+-e .

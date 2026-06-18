@@ -21,6 +21,7 @@ nav:
   - Storage backends: storage.md
   - Security model: security.md
   - Migrating from django-passkeys: migration.md
+  - API reference: reference.md
 
 markdown_extensions:
   - admonition
