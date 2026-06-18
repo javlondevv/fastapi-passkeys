@@ -1,21 +1,16 @@
-# Changelog
+# CHANGELOG
 
-All notable changes to this project are documented here. This project adheres to
-[Semantic Versioning](https://semver.org/) and the changelog is generated from
-[Conventional Commits](https://www.conventionalcommits.org/).
 
-## [0.1.0] - Unreleased
+## v0.1.0 (2026-06-18)
 
-Initial alpha release.
+### Features
 
-### Added
-- WebAuthn registration and authentication ceremonies for FastAPI.
-- `Passkeys` facade with a ready-to-mount router (Layer A) and standalone
-  `RegistrationService` / `AuthenticationService` (Layer B).
-- Async, ORM-agnostic `CredentialRepository` and `ChallengeStore` Protocols.
-- Built-in in-memory and stateless (HMAC-signed) stores; `[sqlalchemy]` async
-  credential repository and `[redis]` challenge store.
-- Signature-counter clone detection with `strict-reject` / `flag-disable` policies.
-- Server-enforced challenge TTL, single-use challenges, strict origin/RP validation.
-- Structured audit events via a pluggable `AuditSink`.
-- Shipped contract test-suite and a software authenticator in `fastapi_passkeys.testing`.
+- Initial fastapi-passkeys library (v0.1.0)
+  ([`78c011a`](https://github.com/javlondevv/fastapi-passkeys/commit/78c011a63c3b4cd8f53e49e35d3c650ad0bd5055))
+
+WebAuthn/passkeys authentication for FastAPI: async-native, storage-agnostic, secure by default.
+  Includes registration/authentication ceremonies, signature counter clone detection, single-use TTL
+  challenges, strict origin/RP validation, pluggable repositories (in-memory, stateless, SQLAlchemy,
+  Redis), a contract test-suite, a software authenticator for tests, docs, and a runnable example.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
