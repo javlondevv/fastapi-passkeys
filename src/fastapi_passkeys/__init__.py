@@ -20,6 +20,9 @@ Quick start (Layer A)::
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
+
 from fastapi_passkeys.api import GetUser, OnAuthenticated, Passkeys, install_exception_handlers
 from fastapi_passkeys.audit import (
     AuditEvent,
@@ -62,7 +65,12 @@ from fastapi_passkeys.services import (
     SystemClock,
 )
 
-__version__ = "0.1.0"
+# Single source of truth: the installed package metadata (set from pyproject.toml).
+# This never drifts from the released version on PyPI.
+try:
+    __version__ = _version("fastapi-passkeys")
+except PackageNotFoundError:  # running from a source tree without an install
+    __version__ = "0.0.0"
 
 __all__ = [
     "AssertionVerificationError",
