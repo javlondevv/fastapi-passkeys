@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.1.1 (2026-06-18)
+
+### Bug Fixes
+
+- **release**: Add manual workflow_dispatch trigger to release pipeline
+  ([`cd1eb35`](https://github.com/javlondevv/fastapi-passkeys/commit/cd1eb35d0bb55b0c223986c3f03ef1a07bb26f83))
+
+Allows manually re-triggering a release and ensures the first successful PyPI publish via Trusted
+  Publishing (OIDC).
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+
+
 ## v0.1.0 (2026-06-18)
 
 ### Features
