@@ -16,16 +16,16 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
       - name: Python Semantic Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v9
+        uses: python-semantic-release/python-semantic-release@v10
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -35,6 +35,6 @@ jobs:
 
       - name: Upload artifacts to GitHub Release
         if: steps.release.outputs.released == 'true'
-        uses: python-semantic-release/publish-action@v9
+        uses: python-semantic-release/publish-action@v10
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
