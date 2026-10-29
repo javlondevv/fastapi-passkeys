@@ -1,0 +1,109 @@
+name: Docker
+
+# Publishes the runnable demo (examples/app.py) to ghcr.io/javlondevv/fastapi-passkeys.
+#
+# Release tags are pushed by python-semantic-release with GITHUB_TOKEN, and events
+# created by GITHUB_TOKEN do not trigger other workflows, so a `push: tags` trigger
+# would never fire. Instead this runs after every successful "Release" run on main
+# and builds the latest v* tag, skipping when that version is already on GHCR.
+# workflow_dispatch always (re)builds the latest tag.
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency: docker
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  image:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out latest release tag
+        id: tag
+        run: |
+          tag="$(git tag --list 'v*' --sort=-v:refname | head -n 1)"
+          if [ -z "$tag" ]; then
+            echo "No v* tag found" >&2
+            exit 1
+          fi
+          git checkout --quiet "$tag"
+          {
+            echo "tag=$tag"
+            echo "version=${tag#v}"
+            echo "sha=$(git rev-parse HEAD)"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip if this version is already published
+        id: exists
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] \
+            && docker manifest inspect "$IMAGE:$VERSION" > /dev/null 2>&1; then
+            echo "$IMAGE:$VERSION already exists; nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-qemu-action@v4
+        if: steps.exists.outputs.skip != 'true'
+
+      - uses: docker/setup-buildx-action@v4
+        if: steps.exists.outputs.skip != 'true'
+
+      - id: meta
+        if: steps.exists.outputs.skip != 'true'
+        uses: docker/metadata-action@v6
+        env:
+          # Put labels on the index too, so GHCR shows the description for multi-arch images.
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.tag.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag.outputs.tag }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=fastapi-passkeys demo
+            org.opencontainers.image.description=Runnable passkeys / WebAuthn demo for fastapi-passkeys. Run it and open http://localhost:8000.
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.revision=${{ steps.tag.outputs.sha }}
+          annotations: |
+            org.opencontainers.image.title=fastapi-passkeys demo
+            org.opencontainers.image.description=Runnable passkeys / WebAuthn demo for fastapi-passkeys. Run it and open http://localhost:8000.
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.revision=${{ steps.tag.outputs.sha }}
+
+      - uses: docker/build-push-action@v7
+        if: steps.exists.outputs.skip != 'true'
+        with:
+          # Path context: build the checked-out tag, not the commit that triggered the run.
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
