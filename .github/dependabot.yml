@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Keeps workflow actions (including the SHA-pinned Docker actions) up to date.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
