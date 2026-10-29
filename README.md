@@ -41,6 +41,7 @@
 - [Install](#install)
 - [Quickstart](#quickstart)
 - [Endpoints](#endpoints)
+- [Run the demo with Docker](#run-the-demo-with-docker)
 - [Storage backends](#storage-backends)
 - [Security](#security)
 - [Documentation](#documentation)
@@ -142,6 +143,16 @@ Need full control? Skip the router and drive `passkeys.registration` /
 | `GET` | `/credentials` | List the current user's passkeys |
 | `PATCH` | `/credentials/{id}` | Rename a passkey |
 | `DELETE` | `/credentials/{id}` | Revoke a passkey |
+
+## Run the demo with Docker
+
+```bash
+docker run --rm -p 8000:8000 ghcr.io/javlondevv/fastapi-passkeys
+```
+
+Then open http://localhost:8000 and register / sign in with a real authenticator.
+This runs [`examples/app.py`](./examples/app.py) with in-memory storage, so data
+resets on restart. Keep host port `8000`: the demo's origin is `http://localhost:8000`.
 
 ## Storage backends
 
