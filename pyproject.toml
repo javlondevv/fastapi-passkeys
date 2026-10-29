@@ -118,6 +118,17 @@ source = ["fastapi_passkeys"]
 version_toml = ["pyproject.toml:project.version"]
 build_command = "pip install hatchling && hatchling build"
 commit_parser = "conventional"
+# Keep pre-1.0 versioning (v10 flipped this default; without it the next
+# release would jump straight to 1.0.0).
+allow_zero_version = true
+
+[tool.semantic_release.commit_parser_options]
+# v10 parses each line of a squash-merge body as its own commit; keep v9 behaviour.
+parse_squash_commits = false
+
+[tool.semantic_release.changelog]
+# v10 defaults to "update", which needs an insertion marker in CHANGELOG.md.
+mode = "init"
 
 [tool.semantic_release.branches.main]
 match = "main"
