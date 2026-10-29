@@ -41,6 +41,9 @@ jobs:
             exit 1
           fi
           git checkout --quiet "$tag"
+          # Tags older than this workflow (e.g. v0.1.2) have no Dockerfile:
+          # build the tag's source with the build files from this run's commit.
+          git checkout --quiet "$GITHUB_SHA" -- Dockerfile .dockerignore
           {
             echo "tag=$tag"
             echo "version=${tag#v}"
