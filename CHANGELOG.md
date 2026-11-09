@@ -2,6 +2,33 @@
 
 <!-- version list -->
 
+## v0.2.0 (2026-11-09)
+
+### Build System
+
+- **deps**: Bump the github-actions group with 4 updates
+  ([#3](https://github.com/javlondevv/fastapi-passkeys/pull/3),
+  [`e693ae0`](https://github.com/javlondevv/fastapi-passkeys/commit/e693ae06bddeb7fc0db77f49e2ac61e6df5d3a72))
+
+### Continuous Integration
+
+- Add Dependabot for GitHub Actions ([#2](https://github.com/javlondevv/fastapi-passkeys/pull/2),
+  [`747e834`](https://github.com/javlondevv/fastapi-passkeys/commit/747e834b752a022ba13837f02d6539e92566eb4f))
+
+- Publish runnable demo image to GHCR ([#1](https://github.com/javlondevv/fastapi-passkeys/pull/1),
+  [`9df6247`](https://github.com/javlondevv/fastapi-passkeys/commit/9df6247977a4d8a841ffbd05dd5acc967129568f))
+
+### Documentation
+
+- Normalize badge URLs to refresh cached images
+  ([`065adf3`](https://github.com/javlondevv/fastapi-passkeys/commit/065adf358f48fb1f73e57c6f17c8f384643fa1ce))
+
+### Features
+
+- Security hardening and WebAuthn L3 features
+  ([#4](https://github.com/javlondevv/fastapi-passkeys/pull/4),
+  [`f429e1a`](https://github.com/javlondevv/fastapi-passkeys/commit/f429e1a397ed26505851d0c7b658e99c5da9e28d))
+
 
 ### Release notes
 
