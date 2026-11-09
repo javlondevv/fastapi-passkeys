@@ -57,6 +57,13 @@ All emit a `CLONE_SUSPECTED` audit event.
     more than one instance, use `RedisChallengeStore`, or keep `challenge_ttl` short and make
     sure request bodies never reach logs or traces.
 
+The per-process guard holds at most `max_consumed` (default 100,000) unexpired records. When it
+is full, the store **fails closed**: it refuses new ceremonies on that process until records
+expire, and logs a warning on `fastapi_passkeys.stateless`. That is a deliberate trade, a
+temporary lockout instead of re-opened replay. A client that can push that many `finish`
+requests within one `challenge_ttl` can therefore block sign-ins on an instance. Rate-limit the
+endpoints, or use Redis.
+
 `Passkeys` picks the stateless store automatically when `signing_secret` is set and no
 `challenge_store` is passed.
 

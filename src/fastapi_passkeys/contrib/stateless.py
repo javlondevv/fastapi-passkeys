@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 from collections import OrderedDict
 from datetime import datetime
 from typing import Any
@@ -29,6 +30,8 @@ from fastapi_passkeys.contrib._codec import challenge_to_payload, payload_to_cha
 from fastapi_passkeys.domain.models import AuthenticationChallenge, RegistrationChallenge
 from fastapi_passkeys.exceptions import ConfigurationError
 from fastapi_passkeys.services.clock import Clock, SystemClock
+
+_log = logging.getLogger("fastapi_passkeys.stateless")
 
 
 def _sign(body: bytes, secret: bytes) -> bytes:
@@ -74,7 +77,13 @@ class StatelessChallengeStore:
         if len(self._consumed) >= self._max_consumed:
             # Fail closed. Evicting a live record would let a flood of fresh
             # tokens push out a captured one and re-open replay; refusing new
-            # ceremonies until records expire is the safe failure mode.
+            # ceremonies until records expire is the safe failure mode. Sustained
+            # hits mean a flood: rate-limit the endpoints or move to Redis.
+            _log.warning(
+                "stateless challenge replay guard is full (%d live records); refusing "
+                "new ceremonies until records expire",
+                self._max_consumed,
+            )
             return None
         self._consumed[signature] = challenge.expires_at
         return challenge

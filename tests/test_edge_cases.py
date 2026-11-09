@@ -299,7 +299,7 @@ async def test_engine_credential_id_mismatch_is_rejected(
         )
 
 
-async def test_stateless_store_never_evicts_live_consumed_tokens(clock) -> None:
+async def test_stateless_store_never_evicts_live_consumed_tokens(clock, caplog) -> None:
     # Flooding the consumed-set must not push out a live token's record (that
     # would re-open replay); when full of live records the store fails closed.
     store = StatelessChallengeStore("secret", clock=clock, max_consumed=3)
@@ -319,6 +319,7 @@ async def test_stateless_store_never_evicts_live_consumed_tokens(clock) -> None:
     for _ in range(2):
         assert await store.consume(await issue()) is not None
     assert await store.consume(await issue()) is None  # full of live records: refuse
+    assert "replay guard is full" in caplog.text
     assert await store.consume(captured) is None  # replay still blocked
     clock.advance(timedelta(minutes=6))
     assert await store.consume(await issue()) is not None  # capacity returns on expiry
