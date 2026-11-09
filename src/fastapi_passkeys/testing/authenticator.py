@@ -62,11 +62,21 @@ class SoftwareAuthenticator:
         user_verified: bool = True,
         backup_eligible: bool = False,
         backup_state: bool = False,
+        resident_key: bool | None = None,
+        attachment: str | None = "platform",
     ) -> None:
+        """Configure the emulated authenticator.
+
+        ``resident_key`` is reported via the ``credProps`` client extension when
+        requested (``None`` = the client does not support credProps).
+        ``attachment`` is echoed as ``authenticatorAttachment``.
+        """
         self.aaguid = aaguid
         self.user_verified = user_verified
         self.backup_eligible = backup_eligible
         self.backup_state = backup_state
+        self.resident_key = resident_key
+        self.attachment = attachment
         self._creds: dict[bytes, _StoredKey] = {}
 
     def _flags(self, *, attested: bool) -> int:
@@ -112,17 +122,18 @@ class SoftwareAuthenticator:
             + attested
         )
         attestation_object = cbor2.dumps({"fmt": "none", "attStmt": {}, "authData": auth_data})
-        return {
-            "id": bytes_to_b64url(credential_id),
-            "rawId": bytes_to_b64url(credential_id),
-            "type": "public-key",
-            "response": {
+        extensions: dict[str, Any] = {}
+        if (options.get("extensions") or {}).get("credProps") and self.resident_key is not None:
+            extensions["credProps"] = {"rk": self.resident_key}
+        return self._envelope(
+            credential_id,
+            {
                 "clientDataJSON": bytes_to_b64url(client_data),
                 "attestationObject": bytes_to_b64url(attestation_object),
                 "transports": ["internal"],
             },
-            "clientExtensionResults": {},
-        }
+            extensions,
+        )
 
     def get(
         self,
@@ -156,18 +167,30 @@ class SoftwareAuthenticator:
         signature = stored.key.sign(
             auth_data + sha256(client_data).digest(), ec.ECDSA(hashes.SHA256())
         )
-        return {
-            "id": bytes_to_b64url(credential_id),
-            "rawId": bytes_to_b64url(credential_id),
-            "type": "public-key",
-            "response": {
+        return self._envelope(
+            credential_id,
+            {
                 "clientDataJSON": bytes_to_b64url(client_data),
                 "authenticatorData": bytes_to_b64url(auth_data),
                 "signature": bytes_to_b64url(signature),
                 "userHandle": bytes_to_b64url(stored.user_handle),
             },
-            "clientExtensionResults": {},
+            {},
+        )
+
+    def _envelope(
+        self, credential_id: bytes, response: dict[str, Any], extensions: dict[str, Any]
+    ) -> dict[str, Any]:
+        envelope: dict[str, Any] = {
+            "id": bytes_to_b64url(credential_id),
+            "rawId": bytes_to_b64url(credential_id),
+            "type": "public-key",
+            "response": response,
+            "clientExtensionResults": extensions,
         }
+        if self.attachment is not None:
+            envelope["authenticatorAttachment"] = self.attachment
+        return envelope
 
     def _select_credential(self, options: dict[str, Any]) -> bytes:
         allowed = options.get("allowCredentials") or []

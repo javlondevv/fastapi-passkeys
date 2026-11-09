@@ -53,7 +53,7 @@ def payload_to_challenge(
         user = payload.get("u") or {}
         try:
             subject = PasskeyUser(id=user["id"], name=user["n"], display_name=user["d"])
-        except KeyError:
+        except (KeyError, TypeError):
             return None
         return RegistrationChallenge(
             challenge=challenge,
@@ -61,9 +61,12 @@ def payload_to_challenge(
             created_at=created_at,
             expires_at=expires_at,
         )
+    user_id = payload.get("uid")
+    if user_id is not None and not isinstance(user_id, str):
+        return None
     return AuthenticationChallenge(
         challenge=challenge,
-        user_id=payload.get("uid"),
+        user_id=user_id,
         created_at=created_at,
         expires_at=expires_at,
     )

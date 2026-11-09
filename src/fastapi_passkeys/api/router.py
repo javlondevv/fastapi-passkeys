@@ -7,10 +7,9 @@ register/authenticate/manage flow. The underlying services remain available as
 
 from __future__ import annotations
 
-import binascii
 from typing import Any
 
-from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi import APIRouter, FastAPI, HTTPException, Request, Response
 
 from fastapi_passkeys._b64 import b64url_to_bytes, bytes_to_b64url
 from fastapi_passkeys.api.dependencies import (
@@ -28,18 +27,27 @@ from fastapi_passkeys.api.schemas import (
     RegisterFinishRequest,
     RegisterFinishResponse,
     RenameRequest,
+    SignalsResponse,
 )
-from fastapi_passkeys.audit import AuditEvent, AuditEventType, AuditSink, NullAuditSink
+from fastapi_passkeys.audit import (
+    AuditEvent,
+    AuditEventType,
+    AuditSink,
+    NullAuditSink,
+    emit_safely,
+)
 from fastapi_passkeys.config import PasskeyConfig
 from fastapi_passkeys.contrib.memory import InMemoryChallengeStore
 from fastapi_passkeys.contrib.stateless import StatelessChallengeStore
+from fastapi_passkeys.domain.models import Credential
 from fastapi_passkeys.engine.base import WebAuthnEngine
 from fastapi_passkeys.engine.pywebauthn import PyWebAuthnEngine
+from fastapi_passkeys.exceptions import ManagedCredentialNotFound
 from fastapi_passkeys.repositories.challenges import ChallengeStore
 from fastapi_passkeys.repositories.credentials import CredentialRepository
 from fastapi_passkeys.services.authentication import AuthenticationService
 from fastapi_passkeys.services.clock import Clock, SystemClock
-from fastapi_passkeys.services.registration import RegistrationService
+from fastapi_passkeys.services.registration import RegistrationService, user_handle
 
 
 class Passkeys:
@@ -94,6 +102,27 @@ class Passkeys:
         """Register JSON error responses for the library's exceptions."""
         install_exception_handlers(app)
 
+    @property
+    def well_known_router(self) -> APIRouter:
+        """Serves ``/.well-known/webauthn`` for WebAuthn Related Origin Requests.
+
+        Mount it **without a prefix** on the app served at ``rp_id``::
+
+            app.include_router(passkeys.well_known_router)
+
+        Responds 404 unless ``config.related_origins`` is set.
+        """
+        router = APIRouter()
+
+        @router.get("/.well-known/webauthn", include_in_schema=False)
+        async def related_origins() -> dict[str, list[str]]:
+            if not self.config.related_origins:
+                raise HTTPException(status_code=404)
+            origins = [o for o in self.config.allowed_origins if o.startswith("http")]
+            return {"origins": origins}
+
+        return router
+
     def _build_router(self) -> APIRouter:
         router = APIRouter(tags=["passkeys"])
 
@@ -104,9 +133,17 @@ class Passkeys:
             return BeginResponse(publicKey=options, state=handle)
 
         @router.post("/register/finish", response_model=RegisterFinishResponse)
-        async def register_finish(body: RegisterFinishRequest) -> RegisterFinishResponse:
+        async def register_finish(
+            body: RegisterFinishRequest, request: Request
+        ) -> RegisterFinishResponse:
+            # Bind the ceremony to the caller: a handle issued to another user is
+            # rejected, so a leaked handle cannot attach an attacker's key.
+            user = await resolve_user(self._get_user, request)
             credential = await self.registration.finish(
-                response=body.credential, handle=body.state, device_name=body.device_name
+                response=body.credential,
+                handle=body.state,
+                device_name=body.device_name,
+                user=user,
             )
             return RegisterFinishResponse(credentialId=bytes_to_b64url(credential.credential_id))
 
@@ -130,37 +167,66 @@ class Passkeys:
             credentials = await self._credentials.list_by_user(user.id)
             return [CredentialView.from_domain(c) for c in credentials]
 
+        @router.get("/credentials/signals", response_model=SignalsResponse)
+        async def credential_signals(request: Request) -> SignalsResponse:
+            user = await resolve_user(self._get_user, request)
+            credentials = await self._credentials.list_by_user(user.id)
+            user_id = bytes_to_b64url(user_handle(user.id))
+            return SignalsResponse(
+                allAcceptedCredentials={
+                    "rpId": self.config.rp_id,
+                    "userId": user_id,
+                    "allAcceptedCredentialIds": [
+                        bytes_to_b64url(c.credential_id) for c in credentials
+                    ],
+                },
+                currentUserDetails={
+                    "rpId": self.config.rp_id,
+                    "userId": user_id,
+                    "name": user.name,
+                    "displayName": user.display_name or user.name,
+                },
+            )
+
         @router.patch("/credentials/{credential_id}", status_code=204)
         async def rename_credential(
             credential_id: str, body: RenameRequest, request: Request
         ) -> Response:
             user = await resolve_user(self._get_user, request)
-            raw = _decode_id(credential_id)
-            if raw is not None:
-                await self._credentials.rename(raw, user.id, body.device_name)
+            credential = await self._owned_credential(credential_id, user.id)
+            await self._credentials.rename(credential.credential_id, user.id, body.device_name)
+            await self._emit(AuditEventType.CREDENTIAL_RENAMED, user.id, credential)
             return Response(status_code=204)
 
         @router.delete("/credentials/{credential_id}", status_code=204)
         async def delete_credential(credential_id: str, request: Request) -> Response:
             user = await resolve_user(self._get_user, request)
-            raw = _decode_id(credential_id)
-            if raw is not None:
-                await self._credentials.delete(raw, user.id)
-                await self._audit.emit(
-                    AuditEvent(
-                        type=AuditEventType.CREDENTIAL_REVOKED,
-                        timestamp=self._clock.now(),
-                        user_id=user.id,
-                        credential_id=credential_id,
-                    )
-                )
+            credential = await self._owned_credential(credential_id, user.id)
+            await self._credentials.delete(credential.credential_id, user.id)
+            await self._emit(AuditEventType.CREDENTIAL_REVOKED, user.id, credential)
             return Response(status_code=204)
 
         return router
 
+    async def _owned_credential(self, credential_id: str, user_id: str) -> Credential:
+        """Resolve a credential the caller owns, or 404 — identically for "absent"
+        and "someone else's", so ids cannot be probed across accounts."""
+        try:
+            raw = b64url_to_bytes(credential_id)
+        except ValueError:
+            raise ManagedCredentialNotFound() from None
+        credential = await self._credentials.get_by_credential_id(raw)
+        if credential is None or credential.user_id != user_id:
+            raise ManagedCredentialNotFound()
+        return credential
 
-def _decode_id(value: str) -> bytes | None:
-    try:
-        return b64url_to_bytes(value)
-    except (binascii.Error, ValueError):
-        return None
+    async def _emit(self, kind: AuditEventType, user_id: str, credential: Credential) -> None:
+        await emit_safely(
+            self._audit,
+            AuditEvent(
+                type=kind,
+                timestamp=self._clock.now(),
+                user_id=user_id,
+                credential_id=bytes_to_b64url(credential.credential_id),
+            ),
+        )

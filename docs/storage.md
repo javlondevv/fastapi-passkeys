@@ -39,6 +39,23 @@ from fastapi_passkeys.contrib.redis import RedisChallengeStore
 store = RedisChallengeStore(Redis.from_url("redis://localhost:6379/0"))
 ```
 
+## Repository contract (0.2)
+
+- `add` must raise `CredentialAlreadyExists` — never overwrite — when the credential id is
+  already stored. Credential ids are chosen by the authenticator, so an overwrite would let a
+  user replace someone else's passkey. The contract suite checks this. Back it with a unique /
+  primary key and translate the integrity error, as the SQLAlchemy adapter does.
+- `update_usage` accepts an optional `backup_state: bool | None` keyword (the credential's
+  current BS flag; `None` = unchanged). Repositories written for 0.1 without it keep working —
+  the backup state is then reported but not persisted.
+
+### SQLAlchemy schema notes
+
+The `passkey_credentials` table is unchanged in 0.2 on PostgreSQL and SQLite. On
+MySQL/MariaDB `credential_id` is now `VARBINARY(1023)`. Earlier versions declared an
+unbounded `BLOB` primary key, so `create_all` failed on MySQL and no existing MySQL table
+needs migrating.
+
 ## Writing your own
 
 Implement the Protocol against any store, then prove it with the shipped contract suite:

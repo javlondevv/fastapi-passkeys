@@ -15,5 +15,5 @@ def install_exception_handlers(app: FastAPI) -> None:
     async def _on_passkey_error(_: Request, exc: PasskeyError) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
-            content={"error": {"code": exc.code, "message": exc.message}},
+            content={"error": {**exc.extra, "code": exc.code, "message": exc.message}},
         )

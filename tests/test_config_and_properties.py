@@ -34,11 +34,11 @@ def test_config_requires_at_least_one_origin() -> None:
 
 def test_require_user_verification_reflects_policy() -> None:
     required = PasskeyConfig(
-        rp_id="x",
+        rp_id="x.com",
         rp_name="y",
         expected_origins=["https://x.com"],
         user_verification=UserVerification.REQUIRED,
     )
-    preferred = PasskeyConfig(rp_id="x", rp_name="y", expected_origins=["https://x.com"])
+    preferred = PasskeyConfig(rp_id="x.com", rp_name="y", expected_origins=["https://x.com"])
     assert required.require_user_verification is True
     assert preferred.require_user_verification is False

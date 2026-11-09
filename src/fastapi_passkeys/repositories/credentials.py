@@ -19,7 +19,13 @@ class CredentialRepository(Protocol):
     """Persistence for registered passkeys. All methods are coroutines."""
 
     async def add(self, credential: Credential) -> None:
-        """Persist a newly registered credential."""
+        """Persist a newly registered credential.
+
+        Must raise :class:`~fastapi_passkeys.exceptions.CredentialAlreadyExists`
+        — never overwrite — if the credential id is already stored. Credential
+        ids are chosen by the authenticator, so an overwrite would let one user
+        replace another's passkey.
+        """
         ...
 
     async def get_by_credential_id(self, credential_id: bytes) -> Credential | None:
@@ -36,8 +42,14 @@ class CredentialRepository(Protocol):
         *,
         sign_count: int,
         last_used_at: datetime,
+        backup_state: bool | None = None,
     ) -> None:
-        """Record a successful authentication: advance counter and last-used."""
+        """Record a successful authentication: advance counter and last-used.
+
+        ``backup_state`` (added in 0.2) is the credential's current BS flag;
+        ``None`` means leave it unchanged. Implementations written against 0.1
+        that do not accept it keep working — the service detects that.
+        """
         ...
 
     async def rename(self, credential_id: bytes, user_id: str, name: str) -> None:

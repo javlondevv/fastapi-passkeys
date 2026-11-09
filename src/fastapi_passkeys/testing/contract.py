@@ -14,6 +14,7 @@ verified the same way::
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 from datetime import timedelta
 
@@ -23,6 +24,7 @@ from fastapi_passkeys.domain.models import (
     PasskeyUser,
     RegistrationChallenge,
 )
+from fastapi_passkeys.exceptions import CredentialAlreadyExists
 from fastapi_passkeys.repositories.challenges import ChallengeStore
 from fastapi_passkeys.repositories.credentials import CredentialRepository
 from fastapi_passkeys.services.clock import Clock
@@ -56,10 +58,29 @@ async def check_credential_repository(make_repo: Callable[[], CredentialReposito
     listed = await repo.list_by_user(cred.user_id)
     assert [c.credential_id for c in listed] == [cred.credential_id]
 
+    # A second add with the same id must fail, never overwrite (takeover risk).
+    hijack = _sample_credential(user_id="intruder")
+    try:
+        await repo.add(hijack)
+    except CredentialAlreadyExists:
+        pass
+    else:
+        raise AssertionError("add() overwrote an existing credential id")
+    owner = await repo.get_by_credential_id(cred.credential_id)
+    assert owner is not None and owner.user_id == cred.user_id
+
     used_at = FrozenClock().now() + timedelta(minutes=1)
     await repo.update_usage(cred.credential_id, sign_count=42, last_used_at=used_at)
     after = await repo.get_by_credential_id(cred.credential_id)
     assert after is not None and after.sign_count == 42
+    assert after.last_used_at is not None
+
+    if "backup_state" in inspect.signature(repo.update_usage).parameters:  # optional (0.2+)
+        await repo.update_usage(
+            cred.credential_id, sign_count=43, last_used_at=used_at, backup_state=True
+        )
+        backed_up = await repo.get_by_credential_id(cred.credential_id)
+        assert backed_up is not None and backed_up.backup_state is True
 
     await repo.rename(cred.credential_id, cred.user_id, "Renamed")
     renamed = await repo.get_by_credential_id(cred.credential_id)

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastapi-passkeys"
-version = "0.1.2"
+version = "0.2.0"
 description = "Passkeys / WebAuthn authentication for FastAPI — secure by default, storage-agnostic, async-native."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Security",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -39,7 +40,10 @@ dependencies = [
     "fastapi>=0.110",
     "pydantic>=2.5",
     "pydantic-settings>=2.1",
-    "webauthn>=2.0",
+    # Upper-bounded: the engine adapts py_webauthn's result types, and a major
+    # release may change them (cf. django-passkeys #54, python-fido2 1→2). CI
+    # tests both the floor and the latest release.
+    "webauthn>=2.0,<4",
 ]
 
 [project.urls]
@@ -107,6 +111,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "--cov=fastapi_passkeys --cov-report=term-missing"
 
@@ -118,6 +123,8 @@ source = ["fastapi_passkeys"]
 version_toml = ["pyproject.toml:project.version"]
 build_command = "pip install hatchling && hatchling build"
 commit_parser = "conventional"
+# Stay on 0.x until the 1.0 API freeze, even if a commit carries BREAKING CHANGE.
+major_on_zero = false
 # Keep pre-1.0 versioning (v10 flipped this default; without it the next
 # release would jump straight to 1.0.0).
 allow_zero_version = true
@@ -127,8 +134,9 @@ allow_zero_version = true
 parse_squash_commits = false
 
 [tool.semantic_release.changelog]
-# v10 defaults to "update", which needs an insertion marker in CHANGELOG.md.
-mode = "init"
+# "update" inserts each release at the marker and keeps hand-written notes below it.
+mode = "update"
+insertion_flag = "<!-- version list -->"
 
 [tool.semantic_release.branches.main]
 match = "main"
