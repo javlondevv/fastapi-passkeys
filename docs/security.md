@@ -48,7 +48,7 @@ All emit a `CLONE_SUSPECTED` audit event.
 | --- | --- | --- | --- |
 | `InMemoryChallengeStore` | ✅ | none | **Single process only** — with several workers, `begin` and `finish` can land on different processes. |
 | `RedisChallengeStore` | ✅ (atomic `GETDEL`) | Redis | Recommended for multi-instance deployments. |
-| `StatelessChallengeStore` | ⚠️ per process | none | Signed token. Remembers consumed tokens *in-process* until they expire, so a replay against the **same** process fails — but a captured `{state, credential}` pair can be replayed against **another** instance until the token expires. |
+| `StatelessChallengeStore` | ⚠️ per process | none | Signed token. Remembers consumed tokens *in-process* until they expire (failing closed when `max_consumed` live records are held), so a replay against the **same** process fails — but a captured `{state, credential}` pair can be replayed against **another** instance until the token expires. |
 
 !!! warning "Stateless store across several instances"
     Before 0.2 the stateless store relied on the signature counter to stop replays. That does
@@ -83,6 +83,9 @@ All emit a `CLONE_SUSPECTED` audit event.
   credential ids (`allowCredentials`), and an empty list reveals that a user has no passkeys.
   Prefer usernameless sign-in (no `userId`, discoverable credentials), or put that endpoint
   behind your own lookup that does not reveal whether an account exists.
+  Likewise, whether a given *credential id* is registered can be told apart from the error
+  code (`credential_not_found` vs `assertion_verification_failed`). Credential ids are not
+  secrets, so this is by design: it lets the browser's Signal API prune deleted passkeys.
 - **Multi-tenant `rp_id`:** never derive `rp_id` or origins from the `Host` header unchecked —
   map the host through an allow-list of tenants.
 - **Render names safely:** device names are user input. Escape them (`textContent`, template

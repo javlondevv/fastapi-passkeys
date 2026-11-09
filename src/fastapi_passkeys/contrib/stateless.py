@@ -50,7 +50,8 @@ class StatelessChallengeStore:
         self._secret = secret.encode("utf-8") if isinstance(secret, str) else secret
         self._clock = clock or SystemClock()
         self._max_consumed = max_consumed
-        # signature -> token expiry; replay guard for this process only.
+        # signature -> token expiry; replay guard for this process only. Bounded
+        # by ``max_consumed`` live records; when full, consume() refuses tokens.
         self._consumed: OrderedDict[bytes, datetime] = OrderedDict()
 
     async def put(self, challenge: RegistrationChallenge | AuthenticationChallenge) -> str:
@@ -71,7 +72,10 @@ class StatelessChallengeStore:
         if signature in self._consumed:
             return None
         if len(self._consumed) >= self._max_consumed:
-            self._consumed.popitem(last=False)
+            # Fail closed. Evicting a live record would let a flood of fresh
+            # tokens push out a captured one and re-open replay; refusing new
+            # ceremonies until records expire is the safe failure mode.
+            return None
         self._consumed[signature] = challenge.expires_at
         return challenge
 

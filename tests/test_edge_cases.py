@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import secrets
 import warnings
 from datetime import datetime, timedelta
 from typing import Any
@@ -296,3 +297,28 @@ async def test_engine_credential_id_mismatch_is_rejected(
         await authentication.finish(
             response=authenticator.get(options, origin=ORIGIN), handle=handle
         )
+
+
+async def test_stateless_store_never_evicts_live_consumed_tokens(clock) -> None:
+    # Flooding the consumed-set must not push out a live token's record (that
+    # would re-open replay); when full of live records the store fails closed.
+    store = StatelessChallengeStore("secret", clock=clock, max_consumed=3)
+
+    async def issue() -> str:
+        return await store.put(
+            AuthenticationChallenge(
+                challenge=secrets.token_bytes(32),
+                user_id=None,
+                created_at=clock.now(),
+                expires_at=clock.now() + timedelta(minutes=5),
+            )
+        )
+
+    captured = await issue()
+    assert await store.consume(captured) is not None
+    for _ in range(2):
+        assert await store.consume(await issue()) is not None
+    assert await store.consume(await issue()) is None  # full of live records: refuse
+    assert await store.consume(captured) is None  # replay still blocked
+    clock.advance(timedelta(minutes=6))
+    assert await store.consume(await issue()) is not None  # capacity returns on expiry
