@@ -27,6 +27,7 @@ from webauthn.helpers.structs import (
     UserVerificationRequirement,
 )
 
+from fastapi_passkeys._b64 import b64url_to_bytes
 from fastapi_passkeys.config import PasskeyConfig
 from fastapi_passkeys.domain.enums import Transport
 from fastapi_passkeys.domain.models import (
@@ -54,21 +55,55 @@ def _descriptors(credentials: list[Credential]) -> list[PublicKeyCredentialDescr
 
 
 def _as_dict(response: dict[str, Any] | str) -> dict[str, Any]:
-    if isinstance(response, str):
-        return cast("dict[str, Any]", json.loads(response))
-    return response
+    data = json.loads(response) if isinstance(response, str) else response
+    return data if isinstance(data, dict) else {}
 
 
-def _transports_from(response: dict[str, Any] | str) -> tuple[Transport, ...]:
-    data = _as_dict(response)
-    raw = data.get("response", {}).get("transports") or []
+def _transports_from(data: dict[str, Any]) -> tuple[Transport, ...]:
+    inner = data.get("response")
+    raw = inner.get("transports") if isinstance(inner, dict) else None
     out: list[Transport] = []
-    for item in raw:
+    for item in raw if isinstance(raw, list) else []:
         try:
-            out.append(Transport(item))
+            transport = Transport(item)
         except ValueError:
             continue  # ignore transports we do not model
+        if transport not in out:
+            out.append(transport)
     return tuple(out)
+
+
+def _cred_props_rk(data: dict[str, Any]) -> bool | None:
+    """``clientExtensionResults.credProps.rk``: did the client create a discoverable key?"""
+    results = data.get("clientExtensionResults")
+    props = results.get("credProps") if isinstance(results, dict) else None
+    rk = props.get("rk") if isinstance(props, dict) else None
+    return rk if isinstance(rk, bool) else None
+
+
+_FLAG_UV = 0x04
+
+
+def _uv_flag(data: dict[str, Any]) -> bool:
+    """Read the UV bit from ``authenticatorData`` (byte 32).
+
+    Only called *after* py_webauthn verified the signature over that data, so
+    the flags are authentic. Needed because py_webauthn releases before 2.5.0 do
+    not expose ``user_verified`` on authentication results.
+    """
+    inner = data.get("response")
+    raw = inner.get("authenticatorData") if isinstance(inner, dict) else None
+    try:
+        auth_data = b64url_to_bytes(raw) if isinstance(raw, str) else b""
+    except ValueError:
+        return False
+    return len(auth_data) > 32 and bool(auth_data[32] & _FLAG_UV)
+
+
+def _with_l3_options(options: dict[str, Any], config: PasskeyConfig) -> dict[str, Any]:
+    if config.hints:
+        options["hints"] = [h.value for h in config.hints]
+    return options
 
 
 def _aaguid_to_bytes(value: str | None) -> bytes | None:
@@ -120,7 +155,11 @@ class PyWebAuthnEngine:
             exclude_credentials=_descriptors(exclude),
             timeout=config.timeout_ms,
         )
-        return cast("dict[str, Any]", json.loads(options_to_json(options)))
+        data = cast("dict[str, Any]", json.loads(options_to_json(options)))
+        # Ask the client to report whether it made a discoverable credential, so
+        # ``Credential.is_discoverable`` reflects reality under resident_key=preferred.
+        data.setdefault("extensions", {})["credProps"] = True
+        return _with_l3_options(data, config)
 
     def verify_registration(
         self,
@@ -129,12 +168,13 @@ class PyWebAuthnEngine:
         response: dict[str, Any] | str,
         expected_challenge: bytes,
     ) -> VerifiedRegistration:
+        data = _as_dict(response)
         try:
             result = verify_registration_response(
-                credential=_as_dict(response),
+                credential=data,
                 expected_challenge=expected_challenge,
                 expected_rp_id=config.rp_id,
-                expected_origin=config.expected_origins,
+                expected_origin=config.allowed_origins,
                 require_user_verification=config.require_user_verification,
             )
         except Exception as exc:  # py_webauthn raises a family of validation errors
@@ -145,11 +185,13 @@ class PyWebAuthnEngine:
             credential_id=result.credential_id,
             public_key=result.credential_public_key,
             sign_count=result.sign_count,
-            transports=_transports_from(response),
+            transports=_transports_from(data),
             aaguid=_aaguid_to_bytes(getattr(result, "aaguid", None)),
             backup_eligible=eligible,
             backup_state=state,
+            is_discoverable=_cred_props_rk(data),
             attestation_fmt=str(getattr(getattr(result, "fmt", None), "value", "") or "") or None,
+            user_verified=bool(getattr(result, "user_verified", False)),
         )
 
     def authentication_options(
@@ -166,7 +208,8 @@ class PyWebAuthnEngine:
             allow_credentials=_descriptors(allow) or None,
             user_verification=UserVerificationRequirement(config.user_verification.value),
         )
-        return cast("dict[str, Any]", json.loads(options_to_json(options)))
+        data = cast("dict[str, Any]", json.loads(options_to_json(options)))
+        return _with_l3_options(data, config)
 
     def verify_authentication(
         self,
@@ -176,12 +219,13 @@ class PyWebAuthnEngine:
         expected_challenge: bytes,
         credential: Credential,
     ) -> VerifiedAuthentication:
+        data = _as_dict(response)
         try:
             result = verify_authentication_response(
-                credential=_as_dict(response),
+                credential=data,
                 expected_challenge=expected_challenge,
                 expected_rp_id=config.rp_id,
-                expected_origin=config.expected_origins,
+                expected_origin=config.allowed_origins,
                 credential_public_key=credential.public_key,
                 # Pass 0 to disable py_webauthn's own counter check: clone detection
                 # is owned by AuthenticationService so we control the policy, the
@@ -192,8 +236,11 @@ class PyWebAuthnEngine:
         except Exception as exc:
             raise AssertionVerificationError() from exc
 
+        eligible, state = _is_backed_up(result)
         return VerifiedAuthentication(
             credential_id=result.credential_id,
             new_sign_count=result.new_sign_count,
-            user_verified=bool(getattr(result, "user_verified", config.require_user_verification)),
+            user_verified=bool(getattr(result, "user_verified", None) or _uv_flag(data)),
+            backup_eligible=eligible,
+            backup_state=state,
         )

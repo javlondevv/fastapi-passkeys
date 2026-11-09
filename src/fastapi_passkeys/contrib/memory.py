@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import secrets
+from collections import OrderedDict
 from datetime import datetime
 
 from fastapi_passkeys.domain.models import (
@@ -17,6 +18,7 @@ from fastapi_passkeys.domain.models import (
     Credential,
     RegistrationChallenge,
 )
+from fastapi_passkeys.exceptions import CredentialAlreadyExists
 from fastapi_passkeys.services.clock import Clock, SystemClock
 
 
@@ -27,6 +29,8 @@ class InMemoryCredentialRepository:
         self._by_id: dict[bytes, Credential] = {}
 
     async def add(self, credential: Credential) -> None:
+        if credential.credential_id in self._by_id:
+            raise CredentialAlreadyExists()
         self._by_id[credential.credential_id] = credential
 
     async def get_by_credential_id(self, credential_id: bytes) -> Credential | None:
@@ -36,12 +40,20 @@ class InMemoryCredentialRepository:
         return [c for c in self._by_id.values() if c.user_id == user_id]
 
     async def update_usage(
-        self, credential_id: bytes, *, sign_count: int, last_used_at: datetime
+        self,
+        credential_id: bytes,
+        *,
+        sign_count: int,
+        last_used_at: datetime,
+        backup_state: bool | None = None,
     ) -> None:
         existing = self._by_id.get(credential_id)
         if existing is not None:
             self._by_id[credential_id] = dataclasses.replace(
-                existing, sign_count=sign_count, last_used_at=last_used_at
+                existing,
+                sign_count=sign_count,
+                last_used_at=last_used_at,
+                backup_state=existing.backup_state if backup_state is None else backup_state,
             )
 
     async def rename(self, credential_id: bytes, user_id: str, name: str) -> None:
@@ -60,13 +72,26 @@ class InMemoryChallengeStore:
 
     ``consume`` pops the entry, so a replayed handle returns ``None``. Expiry is
     enforced against the injected clock.
+
+    ``begin`` endpoints are usually unauthenticated, so abandoned ceremonies must
+    not accumulate forever: expired entries are evicted on every ``put`` and the
+    number of live challenges is capped at ``max_entries`` (oldest evicted first).
     """
 
-    def __init__(self, *, clock: Clock | None = None) -> None:
+    def __init__(self, *, clock: Clock | None = None, max_entries: int = 100_000) -> None:
+        if max_entries < 1:
+            raise ValueError("max_entries must be at least 1")
         self._clock = clock or SystemClock()
-        self._store: dict[str, RegistrationChallenge | AuthenticationChallenge] = {}
+        self._max_entries = max_entries
+        self._store: OrderedDict[str, RegistrationChallenge | AuthenticationChallenge] = (
+            OrderedDict()
+        )
+
+    def __len__(self) -> int:
+        return len(self._store)
 
     async def put(self, challenge: RegistrationChallenge | AuthenticationChallenge) -> str:
+        self._evict()
         handle = secrets.token_urlsafe(32)
         self._store[handle] = challenge
         return handle
@@ -78,3 +103,15 @@ class InMemoryChallengeStore:
         if self._clock.now() > challenge.expires_at:
             return None
         return challenge
+
+    def _evict(self) -> None:
+        now = self._clock.now()
+        # Insertion order ~ expiry order (one TTL per config), so expired entries
+        # cluster at the front; stop at the first live one.
+        while self._store:
+            oldest = next(iter(self._store.values()))
+            if now <= oldest.expires_at:
+                break
+            self._store.popitem(last=False)
+        while len(self._store) >= self._max_entries:
+            self._store.popitem(last=False)

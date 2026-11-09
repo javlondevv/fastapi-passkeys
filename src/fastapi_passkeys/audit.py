@@ -7,6 +7,7 @@ Security-relevant outcomes are emitted as :class:`AuditEvent` to a pluggable
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -23,6 +24,7 @@ class AuditEventType(str, Enum):
     CHALLENGE_EXPIRED = "challenge_expired"
     CLONE_SUSPECTED = "clone_suspected"
     CREDENTIAL_REVOKED = "credential_revoked"
+    CREDENTIAL_RENAMED = "credential_renamed"
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,8 +54,6 @@ class LoggingAuditSink:
     """Emits events to the standard library logger ``fastapi_passkeys.audit``."""
 
     def __init__(self, logger_name: str = "fastapi_passkeys.audit") -> None:
-        import logging
-
         self._log = logging.getLogger(logger_name)
 
     async def emit(self, event: AuditEvent) -> None:
@@ -64,3 +64,20 @@ class LoggingAuditSink:
             event.credential_id,
             event.detail,
         )
+
+
+_log = logging.getLogger("fastapi_passkeys.audit")
+
+
+async def emit_safely(sink: AuditSink, event: AuditEvent) -> None:
+    """Deliver ``event``; never let a broken sink fail (or half-complete) a ceremony.
+
+    Audit delivery runs *after* state changes (a credential persisted, a counter
+    advanced). Letting a sink exception escape would turn a completed ceremony
+    into an error response while its side effects remain, so failures are logged
+    and swallowed here.
+    """
+    try:
+        await sink.emit(event)
+    except Exception:
+        _log.exception("audit sink failed to record %s", event.type.value)

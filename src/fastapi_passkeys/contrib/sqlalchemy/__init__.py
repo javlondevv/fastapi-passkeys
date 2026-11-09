@@ -19,6 +19,7 @@ migration if you want referential integrity.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     BigInteger,
@@ -30,12 +31,19 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.dialects import mysql
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from fastapi_passkeys.domain.enums import Transport
 from fastapi_passkeys.domain.models import Credential
+from fastapi_passkeys.exceptions import CredentialAlreadyExists
+
+# WebAuthn caps credential ids at 1023 bytes. MySQL cannot index an unbounded
+# BLOB, so the primary key is VARBINARY(1023) there (BYTEA / BLOB elsewhere).
+_CredentialId = LargeBinary().with_variant(mysql.VARBINARY(1023), "mysql", "mariadb")
 
 
 class PasskeyBase(DeclarativeBase):
@@ -45,7 +53,7 @@ class PasskeyBase(DeclarativeBase):
 class PasskeyCredential(PasskeyBase):
     __tablename__ = "passkey_credentials"
 
-    credential_id: Mapped[bytes] = mapped_column(LargeBinary, primary_key=True)
+    credential_id: Mapped[bytes] = mapped_column(_CredentialId, primary_key=True)
     user_id: Mapped[str] = mapped_column(String(255), index=True)
     public_key: Mapped[bytes] = mapped_column(LargeBinary)
     sign_count: Mapped[int] = mapped_column(BigInteger, default=0)
@@ -60,13 +68,19 @@ class PasskeyCredential(PasskeyBase):
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+def _transports(raw: Any) -> tuple[Transport, ...]:
+    # Tolerate values written by other versions/tools instead of failing the login.
+    known = {t.value for t in Transport}
+    return tuple(Transport(t) for t in (raw or []) if isinstance(t, str) and t in known)
+
+
 def _to_domain(row: PasskeyCredential) -> Credential:
     return Credential(
         credential_id=row.credential_id,
         user_id=row.user_id,
         public_key=row.public_key,
         sign_count=row.sign_count,
-        transports=tuple(Transport(t) for t in row.transports),
+        transports=_transports(row.transports),
         aaguid=row.aaguid,
         backup_eligible=row.backup_eligible,
         backup_state=row.backup_state,
@@ -103,7 +117,11 @@ class SqlAlchemyCredentialRepository:
                     last_used_at=credential.last_used_at,
                 )
             )
-            await session.commit()
+            try:
+                await session.commit()
+            except IntegrityError as exc:
+                await session.rollback()
+                raise CredentialAlreadyExists() from exc
 
     async def get_by_credential_id(self, credential_id: bytes) -> Credential | None:
         async with self._session_factory() as session:
@@ -118,13 +136,21 @@ class SqlAlchemyCredentialRepository:
             return [_to_domain(row) for row in result.scalars().all()]
 
     async def update_usage(
-        self, credential_id: bytes, *, sign_count: int, last_used_at: datetime
+        self,
+        credential_id: bytes,
+        *,
+        sign_count: int,
+        last_used_at: datetime,
+        backup_state: bool | None = None,
     ) -> None:
+        values: dict[str, Any] = {"sign_count": sign_count, "last_used_at": last_used_at}
+        if backup_state is not None:
+            values["backup_state"] = backup_state
         async with self._session_factory() as session:
             await session.execute(
                 update(PasskeyCredential)
                 .where(PasskeyCredential.credential_id == credential_id)
-                .values(sign_count=sign_count, last_used_at=last_used_at)
+                .values(**values)
             )
             await session.commit()
 

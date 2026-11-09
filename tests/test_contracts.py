@@ -22,10 +22,7 @@ async def test_in_memory_challenge_store() -> None:
 
 
 async def test_stateless_challenge_store() -> None:
-    await check_challenge_store(
-        lambda clock: StatelessChallengeStore("test-secret", clock=clock),
-        single_use=False,
-    )
+    await check_challenge_store(lambda clock: StatelessChallengeStore("test-secret", clock=clock))
 
 
 async def test_sqlalchemy_credential_repository() -> None:

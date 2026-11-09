@@ -81,17 +81,24 @@ class VerifiedRegistration:
     aaguid: bytes | None = None
     backup_eligible: bool = False
     backup_state: bool = False
-    is_discoverable: bool = False
+    is_discoverable: bool | None = None  # from the credProps extension; None = unknown
     attestation_fmt: str | None = None
+    user_verified: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class VerifiedAuthentication:
-    """Result of verifying an authentication response."""
+    """Result of verifying an authentication response.
+
+    ``backup_eligible`` / ``backup_state`` are ``None`` when the engine does not
+    report them (custom engines written against 0.1).
+    """
 
     credential_id: bytes
     new_sign_count: int
     user_verified: bool
+    backup_eligible: bool | None = None
+    backup_state: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)

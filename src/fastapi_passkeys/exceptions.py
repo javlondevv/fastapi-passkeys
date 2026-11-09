@@ -9,6 +9,8 @@ oracle (e.g. we do not say *why* an assertion failed).
 
 from __future__ import annotations
 
+from typing import Any
+
 
 class PasskeyError(Exception):
     """Base class for every error raised by fastapi-passkeys."""
@@ -19,6 +21,9 @@ class PasskeyError(Exception):
     def __init__(self, message: str | None = None) -> None:
         super().__init__(message or self.__doc__ or self.code)
         self.message = message or (self.__doc__ or self.code)
+        # Optional, client-safe payload merged into the JSON error body (e.g. a
+        # WebAuthn Signal API hint). Never put secrets or internal detail here.
+        self.extra: dict[str, Any] = {}
 
 
 class ConfigurationError(PasskeyError):
@@ -69,6 +74,20 @@ class CredentialAlreadyExists(RegistrationError):
     status_code = 409
 
 
+class RegistrationUserMismatch(RegistrationError):
+    """This registration was started by a different user."""
+
+    code = "registration_user_mismatch"
+    status_code = 400
+
+
+class CredentialLimitReached(RegistrationError):
+    """This account already has the maximum number of passkeys."""
+
+    code = "credential_limit_reached"
+    status_code = 409
+
+
 class AttestationVerificationError(RegistrationError):
     """The registration response failed verification."""
 
@@ -91,6 +110,13 @@ class CredentialNotFound(AuthenticationError):
 
     code = "credential_not_found"
     status_code = 401
+
+
+class ManagedCredentialNotFound(PasskeyError):
+    """No such passkey on this account."""
+
+    code = "credential_not_found"
+    status_code = 404
 
 
 class AssertionVerificationError(AuthenticationError):

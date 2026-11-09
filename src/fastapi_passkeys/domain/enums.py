@@ -50,6 +50,7 @@ class Transport(str, Enum):
     BLE = "ble"
     INTERNAL = "internal"
     HYBRID = "hybrid"
+    SMART_CARD = "smart-card"
 
 
 class CeremonyType(str, Enum):
@@ -60,7 +61,23 @@ class CeremonyType(str, Enum):
 
 
 class SignCountPolicy(str, Enum):
-    """What to do when an authenticator's signature counter does not advance."""
+    """What to do when an authenticator's signature counter does not advance.
+
+    - ``STRICT_REJECT`` — reject the assertion; keep the credential for review.
+    - ``FLAG_DISABLE`` — reject the assertion **and delete** the credential.
+    - ``AUDIT_ONLY`` — accept the assertion but emit ``CLONE_SUSPECTED``. Useful
+      where false positives are costlier than the risk (counters are a weak
+      signal for multi-device passkeys).
+    """
 
     STRICT_REJECT = "strict-reject"
     FLAG_DISABLE = "flag-disable"
+    AUDIT_ONLY = "audit-only"
+
+
+class Hint(str, Enum):
+    """WebAuthn L3 ``hints``: steer the browser UI toward a kind of authenticator."""
+
+    SECURITY_KEY = "security-key"
+    CLIENT_DEVICE = "client-device"
+    HYBRID = "hybrid"
