@@ -1,0 +1,27 @@
+# Only pyproject.toml, README.md, LICENSE, src/ and examples/ are needed.
+.git
+.github
+.venv
+venv
+env
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+build
+dist
+site
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+.coverage.*
+htmlcov
+coverage.xml
+tests
+docs
+assets
+.idea
+.vscode
+.DS_Store
+.env
+.env.*
