@@ -51,9 +51,12 @@
 
 ## Status
 
-`0.1.1` — **Alpha.** Full registration + authentication ceremonies, clone
-detection, and SQLAlchemy/Redis adapters. The public API may change before
-`1.0`. See [`CHANGELOG.md`](./CHANGELOG.md) and the [roadmap](#roadmap).
+`0.2.0` — **Alpha.** Full registration + authentication ceremonies, clone
+detection, SQLAlchemy/Redis adapters, and WebAuthn Level 3 features (hints,
+Signal API, related origins). 0.2.0 is a security-hardening release — see the
+[audit report](https://javlondevv.github.io/fastapi-passkeys/audit/). The public
+API may change before `1.0`. See [`CHANGELOG.md`](./CHANGELOG.md) and the
+[roadmap](#roadmap).
 
 ## Why
 
@@ -63,8 +66,9 @@ signature counters, replayable challenges, missing origin checks.
 way of *your* idea of a session:
 
 - **Secure by default** — single-use, TTL-bound challenges; strict origin/RP
-  validation; user-verification policy; and monotonic `sign_count` cloned-
-  authenticator detection (the prior Django solution stores no counter at all).
+  validation checked at startup; registration bound to the signed-in user;
+  `userHandle` ownership and backup-flag checks; and monotonic `sign_count`
+  cloned-authenticator detection (the prior Django solution stores no counter).
 - **Auth-agnostic** — it verifies the passkey and hands you the user; you mint
   whatever session or JWT you like via an `on_authenticated` hook.
 - **Storage-abstracted** — credentials live behind an async `CredentialRepository`
@@ -96,9 +100,15 @@ from fastapi_passkeys.contrib import InMemoryCredentialRepository
 
 
 async def get_user(request: Request) -> PasskeyUser:
-    # However your app identifies the in-progress user: a signup token, an
-    # existing session, an email from the request body, etc.
-    return PasskeyUser(id="user-123", name="ada@example.com", display_name="Ada Lovelace")
+    # Return the *authenticated* user — from your session or a verified sign-up
+    # token. Never trust an email/user id sent by the client: whoever this
+    # returns is who the new passkey is attached to.
+    account = await current_account(request)  # your auth; raise HTTPException(401) if none
+    return PasskeyUser(
+        id=account.passkey_id,          # opaque, stable, 1-64 bytes (e.g. a UUID) — not an email
+        name=account.email,             # shown in the passkey picker
+        display_name=account.full_name,
+    )
 
 
 async def on_authenticated(request: Request, result: AuthenticationResult) -> dict:
@@ -140,8 +150,15 @@ Need full control? Skip the router and drive `passkeys.registration` /
 | `POST` | `/authenticate/begin` | Start authentication (usernameless or with `userId`) |
 | `POST` | `/authenticate/finish` | Verify assertion; runs your `on_authenticated` hook |
 | `GET` | `/credentials` | List the current user's passkeys |
-| `PATCH` | `/credentials/{id}` | Rename a passkey |
-| `DELETE` | `/credentials/{id}` | Revoke a passkey |
+| `GET` | `/credentials/signals` | WebAuthn Signal API payloads for the current user |
+| `PATCH` | `/credentials/{id}` | Rename a passkey (404 if not yours) |
+| `DELETE` | `/credentials/{id}` | Revoke a passkey (404 if not yours) |
+
+`passkeys.well_known_router` (mounted without a prefix) serves
+`/.well-known/webauthn` when `related_origins` is configured.
+
+> **`get_user` decides whose account a passkey is attached to.** Resolve it from
+> your session — never from an id the client sends.
 
 ## Storage backends
 
@@ -160,10 +177,14 @@ suite in `fastapi_passkeys.testing`.
 ## Security
 
 - **Challenges** are CSPRNG-generated, bound to user + ceremony, TTL-enforced
-  server-side, and single-use (in-memory and Redis stores).
-- **Clone detection** stores and enforces the signature counter; a regression is
-  rejected (and optionally auto-disables the credential) and audited.
-- **Origins & RP ID** are strictly validated; multiple origins are supported.
+  server-side, and single-use (in-memory and Redis stores; per-process for the
+  stateless store).
+- **Registration** is bound to the user who started it; **assertions** must come
+  from the credential's owner (`userHandle`), with BE/BS flag validation.
+- **Clone detection** stores and enforces the signature counter, with
+  `strict-reject`, `flag-disable`, or `audit-only` policies — all audited.
+- **Origins & RP ID** are normalized and validated at startup; multiple origins,
+  Android app origins, and related origins are supported.
 - **No secrets are logged** — audit events carry identifiers and outcomes only.
 
 See the [security model](https://javlondevv.github.io/fastapi-passkeys/security/)
@@ -176,6 +197,7 @@ Full docs: **https://javlondevv.github.io/fastapi-passkeys/**
 
 - [Quickstart](https://javlondevv.github.io/fastapi-passkeys/quickstart/)
 - [Concepts](https://javlondevv.github.io/fastapi-passkeys/concepts/) — a short WebAuthn primer
+- [Configuration](https://javlondevv.github.io/fastapi-passkeys/configuration/)
 - [Storage backends](https://javlondevv.github.io/fastapi-passkeys/storage/)
 - [Security model](https://javlondevv.github.io/fastapi-passkeys/security/)
 - [Migrating from django-passkeys](https://javlondevv.github.io/fastapi-passkeys/migration/)
@@ -184,10 +206,12 @@ Full docs: **https://javlondevv.github.io/fastapi-passkeys/**
 
 - **0.1** — core ceremonies, clone detection, router + services, in-memory /
   stateless / SQLAlchemy / Redis adapters, contract suite, docs site.
-- **0.2** — username-first resolution hooks, conditional-UI helpers, attestation
-  verification options, rate-limiting guidance.
-- **0.3** — SQLModel / Tortoise / Beanie adapters, credential metadata events,
-  admin/management helpers.
+- **0.2** — security hardening from a full audit, WebAuthn L3 hints / Signal API
+  / related origins, credential limits, conditional-UI example, rate-limiting
+  and deployment guidance.
+- **0.3** — soft-disable credentials (with migrations), per-user random user
+  handles, optional FIDO MDS3 attestation + authenticator names, SQLModel /
+  Tortoise / Beanie adapters.
 - **1.0** — API freeze + semver guarantee.
 
 ## Contributing

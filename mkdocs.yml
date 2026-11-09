@@ -18,9 +18,11 @@ nav:
   - Home: index.md
   - Quickstart: quickstart.md
   - Concepts: concepts.md
+  - Configuration: configuration.md
   - Storage backends: storage.md
   - Security model: security.md
   - Migrating from django-passkeys: migration.md
+  - 0.2.0 audit report: audit.md
   - API reference: reference.md
 
 markdown_extensions:
