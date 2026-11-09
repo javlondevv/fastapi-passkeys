@@ -1,0 +1,1419 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Passkeys / WebAuthn authentication for FastAPI.">
+      
+      
+      
+      
+        <link rel="prev" href="../migration/">
+      
+      
+        <link rel="next" href="../reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>0.2.0 audit report - fastapi-passkeys</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#020-audit-report" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="fastapi-passkeys" class="md-header__button md-logo" aria-label="fastapi-passkeys" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            fastapi-passkeys
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              0.2.0 audit report
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/javlondevv/fastapi-passkeys" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    javlondevv/fastapi-passkeys
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="fastapi-passkeys" class="md-nav__button md-logo" aria-label="fastapi-passkeys" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    fastapi-passkeys
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/javlondevv/fastapi-passkeys" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    javlondevv/fastapi-passkeys
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage backends
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating from django-passkeys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0.2.0 audit report
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0.2.0 audit report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-defects-found-in-fastapi-passkeys-012" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Defects found in fastapi-passkeys 0.1.2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-django-passkeys-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. django-passkeys issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="B. django-passkeys issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-related-pull-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug-related pull requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problems-in-django-passkeys-current-core-that-no-issue-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problems in django-passkeys' current core that no issue reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-features-adopted-from-the-library-survey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Features adopted from the library survey
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-defects-found-in-fastapi-passkeys-012" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Defects found in fastapi-passkeys 0.1.2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-django-passkeys-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. django-passkeys issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="B. django-passkeys issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-related-pull-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug-related pull requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problems-in-django-passkeys-current-core-that-no-issue-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problems in django-passkeys' current core that no issue reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-features-adopted-from-the-library-survey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Features adopted from the library survey
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="020-audit-report">0.2.0 audit report</h1>
+<p>The audit for the 0.2.0 release had three parts:</p>
+<ol>
+<li>Every issue and bug-related pull request in
+   <a href="https://github.com/mkalioby/django-passkeys/issues">mkalioby/django-passkeys</a> was mapped to
+   the matching concern in fastapi-passkeys.</li>
+<li>Every line of this code base was reviewed, and its behaviour was checked against the WebAuthn
+   Level 3 specification and py_webauthn 2.0–3.0.</li>
+<li>Comparable libraries were surveyed: py_webauthn, python-fido2, go-webauthn, SimpleWebAuthn,
+   webauthn4j, java-webauthn-server, fido2-net-lib, webauthn-rs and Laragear/WebAuthn.</li>
+</ol>
+<p>A finding was only marked <strong>Fixed</strong> after a regression test reproduced the failure against
+0.1.2 and then passed. Those tests are in <code>tests/test_regressions.py</code>,
+<code>tests/test_api_regressions.py</code>, <code>tests/test_features.py</code> and <code>tests/test_edge_cases.py</code>.</p>
+<p><strong>Status legend:</strong></p>
+<ul>
+<li><strong>Fixed:</strong> the defect was in 0.1.2 and is fixed in 0.2.0.</li>
+<li><strong>N/A:</strong> the architecture rules it out.</li>
+<li><strong>Already handled:</strong> 0.1.2 was already correct.</li>
+<li><strong>Docs:</strong> the concern is the integrator's to handle, and is now documented.</li>
+<li><strong>Deferred:</strong> accepted for now and put on the roadmap.</li>
+</ul>
+<h2 id="a-defects-found-in-fastapi-passkeys-012">A. Defects found in fastapi-passkeys 0.1.2</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Severity</th>
+<th>Finding</th>
+<th>Root cause</th>
+<th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F1</td>
+<td>High</td>
+<td><code>userHandle</code> was never checked. A usernameless assertion was accepted with any user handle, or none.</td>
+<td>The service looked credentials up by id only. WebAuthn §7.2 step 6 also requires the user handle to identify the credential's owner.</td>
+<td><strong>Fixed.</strong> The handle is required in usernameless flows and must match whenever it is present. <code>verify_user_handle</code> is an opt-out for imported credentials.</td>
+</tr>
+<tr>
+<td>F2</td>
+<td>High</td>
+<td>Registration hijack: <code>register/finish</code> did not check who was calling. Anyone holding another user's <code>state</code> handle could attach their own authenticator to that account.</td>
+<td>The handle was the only binding. The stateless store makes this worse, because a handle stays valid for the whole TTL even after use (F3).</td>
+<td><strong>Fixed.</strong> <code>RegistrationService.finish(user=...)</code> rejects a handle issued to a different user. The router always passes the authenticated user.</td>
+</tr>
+<tr>
+<td>F3</td>
+<td>High</td>
+<td>With the stateless store, a captured <code>{state, credential}</code> pair could be replayed to sign in again within <code>challenge_ttl</code> (5 min).</td>
+<td>The docs claimed the signature counter would stop a replay. Synced passkeys always report a counter of 0, so the counter check passes.</td>
+<td><strong>Fixed.</strong> The store now keeps a per-process record of consumed tokens. It never evicts a record that has not expired: when full, it rejects new tokens (fail closed). The docs now state plainly that this does not cover several instances; use Redis there.</td>
+</tr>
+<tr>
+<td>F4</td>
+<td>Medium</td>
+<td><code>InMemoryChallengeStore</code> grew without bound. Each unauthenticated <code>begin</code> call added a challenge that was never removed, which is a memory DoS.</td>
+<td>Entries were only removed when a challenge was consumed.</td>
+<td><strong>Fixed.</strong> Expired entries are evicted on <code>put</code>, and live entries are capped by <code>max_entries</code>.</td>
+</tr>
+<tr>
+<td>F5</td>
+<td>Medium</td>
+<td>A configured origin such as <code>https://example.com/</code> (trailing slash), <code>https://Example.com</code> or <code>…:443</code> never matched, so every ceremony failed.</td>
+<td>Origins were compared as raw strings, but browsers serialize them in a normalized form.</td>
+<td><strong>Fixed.</strong> Origins are normalized at startup. Origins outside <code>rp_id</code>, an <code>rp_id</code> that contains a scheme or port, and a TTL ≤ 0 are now rejected at startup. Android <code>apk-key-hash</code> origins are now accepted.</td>
+</tr>
+<tr>
+<td>F6</td>
+<td>Medium</td>
+<td>Rename and delete returned 204 for unknown ids and for other users' ids. Delete still wrote a <code>CREDENTIAL_REVOKED</code> audit event, so the audit trail recorded revocations that never happened.</td>
+<td>The router delegated straight to the user-scoped repository write and never checked the result.</td>
+<td><strong>Fixed.</strong> The router looks the credential up first. Unknown and foreign ids both return 404 (<code>credential_not_found</code>), and the audit event is emitted only on a real change.</td>
+</tr>
+<tr>
+<td>F6b</td>
+<td>Low</td>
+<td>Request bodies were unbounded: device name, <code>state</code> and <code>userId</code>. A long device name raised a database error (500) on PostgreSQL's <code>String(255)</code> column. Control characters were stored as-is.</td>
+<td>No length bounds on the schemas.</td>
+<td><strong>Fixed.</strong> Device names are limited to 64 characters, trimmed, and may not contain control or format characters. <code>state</code> and <code>userId</code> are length-bounded.</td>
+</tr>
+<tr>
+<td>F7a</td>
+<td>Medium</td>
+<td><code>InMemoryCredentialRepository.add</code> silently overwrote an existing credential id. In SQLAlchemy, a concurrent duplicate raised <code>IntegrityError</code> (500).</td>
+<td><code>add</code> was not atomic, and the contract suite did not test duplicates.</td>
+<td><strong>Fixed.</strong> Both adapters raise <code>CredentialAlreadyExists</code> (409). The contract suite now requires this.</td>
+</tr>
+<tr>
+<td>F7b</td>
+<td>Medium</td>
+<td>A <code>PasskeyUser.id</code> over 64 bytes, or an empty one, produced invalid options. An empty <code>displayName</code> breaks 1Password.</td>
+<td>No validation.</td>
+<td><strong>Fixed.</strong> <code>begin</code> raises <code>ConfigurationError</code> for an id outside 1–64 bytes or an empty name. An empty <code>display_name</code> falls back to <code>name</code>.</td>
+</tr>
+<tr>
+<td>F7c</td>
+<td>Low</td>
+<td>Base64url decoding accepted non-canonical input: <code>+</code>, <code>/</code>, and any non-alphabet character, which was silently dropped.</td>
+<td>The stdlib <code>urlsafe_b64decode</code> is lenient.</td>
+<td><strong>Fixed.</strong> Decoding is now strict.</td>
+</tr>
+<tr>
+<td>F7d</td>
+<td>Medium</td>
+<td>An audit sink that raised turned a completed ceremony into a 500. For example, the credential was stored but the client saw an error.</td>
+<td>Audit events were emitted inline, with no isolation.</td>
+<td><strong>Fixed.</strong> <code>emit_safely</code> logs sink failures and continues.</td>
+</tr>
+<tr>
+<td>F7e</td>
+<td>Low</td>
+<td><code>is_discoverable</code> was inferred from config, so it was wrong under <code>resident_key=preferred</code>.</td>
+<td>The <code>credProps</code> extension was neither requested nor read.</td>
+<td><strong>Fixed.</strong> <code>credProps</code> is requested and stored, with config as the fallback.</td>
+</tr>
+<tr>
+<td>F7f</td>
+<td>Low</td>
+<td>BE/BS were captured only at registration. BS went stale, and a change to BE went undetected.</td>
+<td>The authentication path ignored the backup flags.</td>
+<td><strong>Fixed.</strong> A BE change is rejected (<code>enforce_backup_eligibility</code>). BS is persisted on each login and reported in <code>detail</code>.</td>
+</tr>
+<tr>
+<td>F7g</td>
+<td>Medium</td>
+<td>With py_webauthn 2.0–2.4, <code>detail["user_verified"]</code> reported the <em>policy</em> rather than the authenticator's actual UV flag.</td>
+<td>It fell back to <code>config.require_user_verification</code> whenever the result had no <code>user_verified</code> field.</td>
+<td><strong>Fixed.</strong> The UV bit is read from the verified <code>authenticatorData</code>.</td>
+</tr>
+<tr>
+<td>F7h</td>
+<td>Low</td>
+<td>SQLAlchemy failed to load a row containing a transport it did not know, which broke sign-in for that row. The <code>BLOB</code> primary key also made <code>create_all</code> fail on MySQL.</td>
+<td>Strict enum parsing; an unbounded <code>LargeBinary</code> primary key.</td>
+<td><strong>Fixed.</strong> Unknown transports are skipped, <code>smart-card</code> was added, and the key is <code>VARBINARY(1023)</code> on MySQL.</td>
+</tr>
+<tr>
+<td>F7i</td>
+<td>Low</td>
+<td><code>FLAG_DISABLE</code> deleted the credential without emitting <code>CREDENTIAL_REVOKED</code>.</td>
+<td>Missing event.</td>
+<td><strong>Fixed.</strong></td>
+</tr>
+<tr>
+<td>F8a</td>
+<td>Medium</td>
+<td>The dependency <code>webauthn&gt;=2.0</code> had no upper bound, and CI only tested the latest version. The declared floors (webauthn 2.0, FastAPI 0.110, pydantic 2.5) had never been tested. Testing them found F7g and a pydantic 2.5 bug where the name validators were skipped.</td>
+<td>Missing CI job.</td>
+<td><strong>Fixed.</strong> The bound is now <code>webauthn&gt;=2.0,&lt;4</code>. CI adds a minimum-dependencies job and Python 3.14, and has been verified on webauthn 3.0.1.</td>
+</tr>
+<tr>
+<td>F8b</td>
+<td>Medium</td>
+<td>The release workflow published to PyPI on every push to <code>main</code> without running tests.</td>
+<td>The release job had no dependency on CI.</td>
+<td><strong>Fixed.</strong> Release now <code>needs:</code> the full CI matrix, and <code>major_on_zero = false</code> stops an accidental 1.0.</td>
+</tr>
+<tr>
+<td>F9</td>
+<td>High (docs)</td>
+<td>The quickstart and README said to build <code>get_user</code> from "an email from the request body". An app that followed this would let anyone register a passkey on anyone's account.</td>
+<td>Unsafe example.</td>
+<td><strong>Fixed.</strong> The examples now resolve the authenticated user, and the security model explains why.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="b-django-passkeys-issues">B. django-passkeys issues</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Root cause there</th>
+<th>Status here</th>
+<th>Resolution / evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td><code>reg_begin</code> ValueError</td>
+<td>User handle had the wrong type or encoding.</td>
+<td><strong>Fixed</strong> (F7b)</td>
+<td>The handle is always <code>user.id</code> UTF-8 bytes, validated to 1–64 bytes.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Missing <code>.js.map</code> breaks collectstatic</td>
+<td>Vendored assets.</td>
+<td>N/A</td>
+<td>No static assets are shipped.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>jQuery/Bootstrap assumed</td>
+<td>Template JS coupled to frameworks.</td>
+<td>N/A</td>
+<td>No templates. The example uses plain JS.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Setup instructions; port inside the RP ID</td>
+<td>Unvalidated RP ID and unclear docs.</td>
+<td><strong>Fixed</strong> (F5)</td>
+<td><code>rp_id</code> is validated at startup (no scheme or port, origins must match). New configuration page.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>"Invalid origin"; RP ID <code>localhost:8000</code></td>
+<td>Origin and RP ID mismatch.</td>
+<td><strong>Fixed</strong> (F5)</td>
+<td>Normalization plus a startup check. The config docs cover <code>localhost</code> vs <code>127.0.0.1</code>.</td>
+</tr>
+<tr>
+<td>16</td>
+<td>"A request is already pending"</td>
+<td>Conditional UI not aborted.</td>
+<td>Docs</td>
+<td>The example uses <code>AbortController</code>, and the quickstart documents it.</td>
+</tr>
+<tr>
+<td>17</td>
+<td>"start is not defined"</td>
+<td>Template blocks and Bootstrap.</td>
+<td>N/A</td>
+<td>No templates.</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Mobile (Flutter) client</td>
+<td>No JSON API.</td>
+<td>Already handled + <strong>Fixed</strong></td>
+<td>A JSON router already existed. Android <code>apk-key-hash</code> origins are now accepted (F5).</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Releases without tags</td>
+<td>Process.</td>
+<td>Already handled</td>
+<td>Semantic-release tags every release. Releases are now gated on CI (F8b).</td>
+</tr>
+<tr>
+<td>21</td>
+<td>README wording; RP ID called the "full domain"</td>
+<td>Docs.</td>
+<td>Docs</td>
+<td>The configuration page defines the RP ID precisely.</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Passkeys not persisting</td>
+<td>Ephemeral database, or a changed RP ID.</td>
+<td>Docs</td>
+<td>The security model now says changing <code>rp_id</code> orphans every credential, and that in-memory storage is for development only.</td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>USERNAME_FIELD</code> hard-coded</td>
+<td>Lookup by a login field.</td>
+<td>N/A</td>
+<td>Lookups use the opaque <code>PasskeyUser.id</code>.</td>
+</tr>
+<tr>
+<td>26</td>
+<td>"Invalid origin"</td>
+<td>Origin mismatch.</td>
+<td><strong>Fixed</strong> (F5)</td>
+<td>As #7.</td>
+</tr>
+<tr>
+<td>30</td>
+<td>NotAllowedError; empty <code>displayName</code></td>
+<td>Environment, plus an empty name.</td>
+<td><strong>Fixed</strong> (F7b)</td>
+<td>An empty <code>display_name</code> falls back to <code>name</code>. UV and attachment are configurable.</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Missing <code>@login_required</code> on registration</td>
+<td>Registration endpoints were not bound to an authenticated user.</td>
+<td><strong>Fixed</strong> (F2, F9)</td>
+<td><code>register/finish</code> is bound to the <code>get_user</code> result. The docs require <code>get_user</code> to be the authenticated user.</td>
+</tr>
+<tr>
+<td>33</td>
+<td>Refactor proposal</td>
+<td>—</td>
+<td>N/A</td>
+<td>—</td>
+</tr>
+<tr>
+<td>35</td>
+<td>Not PEP8</td>
+<td>Style.</td>
+<td>Already handled</td>
+<td>ruff and <code>mypy --strict</code> run in CI.</td>
+</tr>
+<tr>
+<td>36</td>
+<td>Vendored packages</td>
+<td>—</td>
+<td>N/A</td>
+<td>None vendored.</td>
+</tr>
+<tr>
+<td>37</td>
+<td>HTML/JS in templates</td>
+<td>—</td>
+<td>N/A</td>
+<td>No templates.</td>
+</tr>
+<tr>
+<td>38</td>
+<td>Errors signalled in the body, not the HTTP status</td>
+<td>Ad-hoc responses.</td>
+<td>Already handled + <strong>Fixed</strong> (F6)</td>
+<td>Typed errors map to 400, 401, 404 and 409. Management endpoints now return 404.</td>
+</tr>
+<tr>
+<td>39</td>
+<td><code>delKey</code> 500 on an invalid id</td>
+<td>Unvalidated id.</td>
+<td><strong>Fixed</strong> (F6, F7c)</td>
+<td>An invalid or unknown id returns 404.</td>
+</tr>
+<tr>
+<td>40</td>
+<td>Admin integration</td>
+<td>—</td>
+<td>N/A</td>
+<td>—</td>
+</tr>
+<tr>
+<td>41</td>
+<td>Tests outside the package</td>
+<td>—</td>
+<td>Already handled</td>
+<td>The test suite and a contract suite ship as <code>fastapi_passkeys.testing</code>.</td>
+</tr>
+<tr>
+<td>42</td>
+<td>ngrok for the example</td>
+<td>Local TLS.</td>
+<td>Docs</td>
+<td><code>http://localhost</code> works with no TLS (configuration page).</td>
+</tr>
+<tr>
+<td>43</td>
+<td>Standard login views</td>
+<td>—</td>
+<td>N/A</td>
+<td>No login views; the <code>on_authenticated</code> hook is used instead.</td>
+</tr>
+<tr>
+<td>44</td>
+<td>Unspecific registration error</td>
+<td>All errors collapsed into a 500.</td>
+<td>Already handled</td>
+<td>Typed codes, for example <code>attestation_verification_failed</code>, <code>credential_already_exists</code> and <code>registration_user_mismatch</code>.</td>
+</tr>
+<tr>
+<td>45</td>
+<td>Platform detection from the user agent</td>
+<td>Heuristic.</td>
+<td><strong>Fixed</strong></td>
+<td><code>CredentialView.aaguid</code> (authenticator model) and <code>detail.authenticator_attachment</code>.</td>
+</tr>
+<tr>
+<td>46</td>
+<td><code>auth_complete</code> is not a view</td>
+<td>Design.</td>
+<td>N/A</td>
+<td>—</td>
+</tr>
+<tr>
+<td>47</td>
+<td>FIDO2 module mixes concerns</td>
+<td>Design.</td>
+<td>N/A</td>
+<td>Engine, service and router are separate layers.</td>
+</tr>
+<tr>
+<td>53</td>
+<td>Wire format for a custom fetch</td>
+<td>Undocumented.</td>
+<td>Docs</td>
+<td>The quickstart documents the full JSON shape.</td>
+</tr>
+<tr>
+<td>54</td>
+<td>python-fido2 major-version break</td>
+<td>Unbounded dependency on a library with breaking majors.</td>
+<td><strong>Fixed</strong> (F8a)</td>
+<td><code>webauthn&lt;4</code> upper bound. CI tests the floor and latest versions; 3.0.1 is verified.</td>
+</tr>
+<tr>
+<td>55</td>
+<td>Modal greyed out</td>
+<td>Bootstrap.</td>
+<td>N/A</td>
+<td>—</td>
+</tr>
+<tr>
+<td>56</td>
+<td>Passwordless login; userHandle never checked</td>
+<td>Lookup by credential id only.</td>
+<td><strong>Fixed</strong> (F1)</td>
+<td><code>userHandle</code> is verified.</td>
+</tr>
+<tr>
+<td>57</td>
+<td>Migration from django-fido</td>
+<td>No import path.</td>
+<td>Docs</td>
+<td>The migration guide covers mapping, the user handle and BE.</td>
+</tr>
+<tr>
+<td>58</td>
+<td>Blank 1Password dialog: <code>Uint8Array</code>, empty names</td>
+<td>Client serializer and empty names.</td>
+<td><strong>Fixed</strong> (F7b) + Docs</td>
+<td>Name fallback. The example handles any BufferSource and prefers <code>toJSON()</code>.</td>
+</tr>
+<tr>
+<td>60</td>
+<td>Variable RP ID (multi-tenant)</td>
+<td><code>Host</code> header trusted.</td>
+<td>Docs</td>
+<td>Per-tenant config from an allow-list (security model).</td>
+</tr>
+<tr>
+<td>61</td>
+<td>Missing migrations</td>
+<td>Model change.</td>
+<td>Docs</td>
+<td>Schema notes in the storage docs. No table changes are needed on PostgreSQL or SQLite.</td>
+</tr>
+<tr>
+<td>71</td>
+<td><code>get_user_model()</code> at import</td>
+<td>Django specific.</td>
+<td>N/A</td>
+<td>No user model is imported.</td>
+</tr>
+<tr>
+<td>72</td>
+<td>Backend raises instead of returning None</td>
+<td>Auth plugin crashed the auth chain.</td>
+<td>N/A</td>
+<td>No auth backend. Errors are typed 4xx responses.</td>
+</tr>
+<tr>
+<td>73</td>
+<td>KeyError on a missing session state</td>
+<td>Unchecked pop.</td>
+<td>Already handled</td>
+<td>A missing, expired or replayed state gives a clean <code>challenge_not_found</code> (400).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bug-related-pull-requests">Bug-related pull requests</h3>
+<table>
+<thead>
+<tr>
+<th>PR</th>
+<th>Concern</th>
+<th>Status here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>#3</td>
+<td>Disabled keys could still authenticate</td>
+<td>N/A. There is no enabled flag; deletion takes effect immediately. A soft-disable is <strong>Deferred</strong> (needs a schema change).</td>
+</tr>
+<tr>
+<td>#8, #78</td>
+<td>Hard-coded username field</td>
+<td>N/A (opaque <code>PasskeyUser.id</code>).</td>
+</tr>
+<tr>
+<td>#9, #29</td>
+<td>IDOR and an existence oracle on key deletion</td>
+<td><strong>Fixed</strong> (F6): identical 404 for unknown and foreign ids.</td>
+</tr>
+<tr>
+<td>#11, #67</td>
+<td>XSS through the key name</td>
+<td>The library returns JSON only. <strong>Fixed</strong>: names are bounded and stripped of control characters. Docs and example use <code>textContent</code>.</td>
+</tr>
+<tr>
+<td>#12, #62</td>
+<td>State changes over GET (CSRF)</td>
+<td>Already handled (PATCH and DELETE with JSON). CSRF guidance in the security model.</td>
+</tr>
+<tr>
+<td>#18, #51</td>
+<td>Conditional-UI abort; <code>Uint8Array</code></td>
+<td>Example and docs (see #16, #58).</td>
+</tr>
+<tr>
+<td>#49, #74</td>
+<td>Backend raising, custom user model</td>
+<td>N/A.</td>
+</tr>
+<tr>
+<td>#67</td>
+<td>Uncaught verify exceptions became 500; duplicate registration</td>
+<td>Already handled: every engine error maps to a typed 4xx. Duplicates give 409, now atomic (F7a).</td>
+</tr>
+<tr>
+<td>#76</td>
+<td><code>get_full_name</code> missing; empty displayName</td>
+<td><strong>Fixed</strong> (F7b).</td>
+</tr>
+<tr>
+<td>#79</td>
+<td>Integer username; PII in the user handle</td>
+<td>N/A for the type. Docs: the handle must be an opaque 1–64 byte id, never an email.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="problems-in-django-passkeys-current-core-that-no-issue-reports">Problems in django-passkeys' current core that no issue reports</h3>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Status here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sign count never stored or checked</td>
+<td>Already handled. Enforced, with three policies.</td>
+</tr>
+<tr>
+<td>userHandle not checked</td>
+<td><strong>Fixed</strong> (F1).</td>
+</tr>
+<tr>
+<td>User handle is <code>base64(username)</code>, which is PII</td>
+<td>Docs (opaque id). Format validated (F7b).</td>
+</tr>
+<tr>
+<td>userVerification not set explicitly</td>
+<td>Already handled (configurable, sent explicitly). Actual UV now reported accurately (F7g).</td>
+</tr>
+<tr>
+<td>Username-first begin enumerates credentials</td>
+<td>Docs. Usernameless flows are recommended. Fake-credential mitigation is <strong>Deferred</strong>.</td>
+</tr>
+<tr>
+<td>Attestation not verified; AAGUID and transports not stored</td>
+<td>AAGUID and transports are stored and exposed. Attestation trust and MDS are <strong>Deferred</strong>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="c-features-adopted-from-the-library-survey">C. Features adopted from the library survey</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Seen in</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userHandle ownership check</td>
+<td>go-webauthn, fido2-net-lib</td>
+<td><strong>Adopted</strong> (F1).</td>
+</tr>
+<tr>
+<td>BE immutability check and BS tracking</td>
+<td>go-webauthn, fido2-net-lib</td>
+<td><strong>Adopted</strong> (F7f).</td>
+</tr>
+<tr>
+<td><code>credProps</code> → discoverable flag</td>
+<td>SimpleWebAuthn</td>
+<td><strong>Adopted</strong> (F7e).</td>
+</tr>
+<tr>
+<td><code>audit-only</code> clone policy</td>
+<td>go-webauthn (<code>CloneWarning</code>)</td>
+<td><strong>Adopted.</strong></td>
+</tr>
+<tr>
+<td>WebAuthn L3 <code>hints</code></td>
+<td>py_webauthn, SimpleWebAuthn</td>
+<td><strong>Adopted</strong> (<code>config.hints</code>).</td>
+</tr>
+<tr>
+<td>Signal API payloads</td>
+<td>SimpleWebAuthn browser</td>
+<td><strong>Adopted</strong> (<code>GET /credentials/signals</code>, <code>error.signal.unknownCredential</code>).</td>
+</tr>
+<tr>
+<td>Related Origin Requests</td>
+<td>spec §5.11, go-webauthn</td>
+<td><strong>Adopted</strong> (<code>related_origins</code>, <code>well_known_router</code>).</td>
+</tr>
+<tr>
+<td>Max credentials per user</td>
+<td>—</td>
+<td><strong>Adopted</strong> (<code>max_credentials_per_user</code>).</td>
+</tr>
+<tr>
+<td>AAGUID exposed in listings</td>
+<td>fido2-net-lib, Laragear</td>
+<td><strong>Adopted</strong> (<code>CredentialView.aaguid</code>). A bundled name/icon map is <strong>Deferred</strong>: the community passkey-aaguids list is being retired in favour of FIDO MDS.</td>
+</tr>
+<tr>
+<td>Android app origins</td>
+<td>go-webauthn, SimpleWebAuthn</td>
+<td><strong>Adopted.</strong></td>
+</tr>
+<tr>
+<td>Soft-disable instead of delete</td>
+<td>Laragear</td>
+<td><strong>Deferred.</strong> It needs a new column, so it waits for a release that ships migrations.</td>
+</tr>
+<tr>
+<td>Random per-user handle decoupled from <code>user.id</code></td>
+<td>SimpleWebAuthn, py_webauthn</td>
+<td><strong>Deferred.</strong> It changes the repository and schema; for now the docs require an opaque id.</td>
+</tr>
+<tr>
+<td>Re-auth ("sudo") dependency</td>
+<td>—</td>
+<td><strong>Docs.</strong> This depends on the app's session model; it can be attached as a router dependency.</td>
+</tr>
+<tr>
+<td>Fake <code>allowCredentials</code> for unknown users</td>
+<td>webauthn-rs</td>
+<td><strong>Deferred.</strong> Docs recommend usernameless flows.</td>
+</tr>
+<tr>
+<td>Attestation trust + FIDO MDS3</td>
+<td>python-fido2, Yubico, go-webauthn</td>
+<td><strong>Deferred.</strong> Planned as an optional <code>[mds]</code> extra.</td>
+</tr>
+<tr>
+<td>Default <code>user_verification="required"</code></td>
+<td>SimpleWebAuthn, webauthn-rs</td>
+<td><strong>Not adopted</strong> in 0.2, because it would break PIN-less security keys. It is documented as the recommended setting for passwordless sign-in.</td>
+</tr>
+<tr>
+<td>Compare-and-set sign-count update</td>
+<td>—</td>
+<td><strong>Deferred.</strong> Two concurrent assertions that present the same counter can both pass. This is low risk, and fixing it needs a repository contract change.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
