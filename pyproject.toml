@@ -134,8 +134,9 @@ allow_zero_version = true
 parse_squash_commits = false
 
 [tool.semantic_release.changelog]
-# v10 defaults to "update", which needs an insertion marker in CHANGELOG.md.
-mode = "init"
+# "update" inserts each release at the marker and keeps hand-written notes below it.
+mode = "update"
+insertion_flag = "<!-- version list -->"
 
 [tool.semantic_release.branches.main]
 match = "main"

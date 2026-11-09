@@ -1,13 +1,15 @@
 # CHANGELOG
 
+<!-- version list -->
 
-## v0.2.0 (unreleased)
+
+### Release notes
 
 A security-hardening release. Every item below has a regression test, and the full
 mapping of defects and django-passkeys issues is in
 [docs/audit.md](https://javlondevv.github.io/fastapi-passkeys/audit/).
 
-### Security
+#### Security
 
 - **Registration is bound to the signed-in user.** `register/finish` now calls `get_user`
   and rejects a `state` handle issued to a different user (`registration_user_mismatch`).
@@ -37,7 +39,7 @@ mapping of defects and django-passkeys issues is in
 - A failing audit sink is logged and ignored, so it can no longer turn a completed
   ceremony into an error.
 
-### Bug fixes
+#### Bug fixes
 
 - Origins are normalized to the browser's form: a trailing slash, uppercase host, or
   default port previously made every ceremony fail. Origins outside `rp_id`, an `rp_id` with
@@ -52,7 +54,7 @@ mapping of defects and django-passkeys issues is in
   `VARBINARY(1023)` on MySQL/MariaDB (an unbounded `BLOB` primary key could not be created).
 - `flag-disable` now also emits `CREDENTIAL_REVOKED`.
 
-### Features
+#### Features
 
 - `hints` (WebAuthn L3) for both ceremonies.
 - Signal API support: `GET /credentials/signals`, and `error.signal.unknownCredential` on
@@ -69,7 +71,7 @@ mapping of defects and django-passkeys issues is in
   `SoftwareAuthenticator(resident_key=..., attachment=...)`.
 - The example app has autofill (conditional UI), Signal API calls, and safe rendering.
 
-### Upgrade notes
+#### Upgrade notes
 
 - **Behaviour change:** `register/finish` now calls your `get_user` hook. It must resolve
   the same user it did for `register/begin`.
@@ -81,7 +83,7 @@ mapping of defects and django-passkeys issues is in
   (`verify_user_handle`, `enforce_backup_eligibility`).
 - Dependencies: `webauthn>=2.0,<4`. Tested with 2.0.0 through 3.0.1, Python 3.10–3.14.
 
-### CI / release
+#### CI / release
 
 - CI adds Python 3.14, a minimum-dependency job, and a build plus `twine check` job.
   Publishing to PyPI now requires the full CI matrix to pass.
